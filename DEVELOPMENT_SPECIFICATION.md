@@ -658,101 +658,102 @@ class InfraAgent(BaseAgent):
 
 ### 6.1 시뮬레이션 시스템 아키텍처
 
+**실제 서비스 기반 검증 환경** (Mock 최소화)
+
 ```mermaid
 graph TB
     subgraph "AI Agent System"
         Agents[8 AI Agents]
     end
 
-    subgraph "Mock Systems (검증용)"
-        MockFE[Mock Frontend<br/>React App]
-        MockBE[Mock Backend<br/>FastAPI]
-        MockDB[(Mock Database<br/>PostgreSQL)]
+    subgraph "Real Systems (검증용 - Azure AKS)"
+        RealFE[Frontend<br/>React App]
+        RealBE[Backend API<br/>FastAPI]
+        RealDB[(PostgreSQL<br/>테스트 데이터)]
 
-        MockServiceNow[Mock ServiceNow API]
-        MockCloud[Mock Cloud API<br/>Azure/AWS]
+        RealServiceNow[ServiceNow MCP<br/>오픈소스]
     end
 
     subgraph "Monitoring Stack"
         Prometheus[Prometheus]
         Grafana[Grafana Dashboard]
-        AlertManager[Alert Manager]
     end
 
-    subgraph "Data Generators"
-        TrafficGen[Traffic Generator]
-        LogGen[Log Generator]
-        MetricGen[Metric Generator]
+    subgraph "Test Data Generators"
+        TrafficGen[Traffic Generator<br/>Locust]
+        DataGen[Test Data Generator]
     end
 
-    Agents --> MockBE
-    Agents --> MockServiceNow
-    Agents --> MockCloud
+    Agents --> RealBE
+    Agents --> RealServiceNow
 
-    MockBE --> MockDB
-    MockFE --> MockBE
+    RealBE --> RealDB
+    RealFE --> RealBE
 
-    TrafficGen --> MockBE
-    LogGen --> MockBE
-    MetricGen --> MockBE
+    TrafficGen --> RealBE
+    DataGen --> RealDB
 
-    MockBE --> Prometheus
+    RealBE --> Prometheus
     Prometheus --> Grafana
-    Prometheus --> AlertManager
 ```
+
+**주요 변경사항:**
+- ✅ **Mock 제거**: 실제 Backend, Frontend, Database 사용
+- ✅ **ServiceNow MCP**: 오픈소스 사용 (https://github.com/echelon-ai-labs/servicenow-mcp)
+- ✅ **Azure AKS 기반**: Production-like 환경
+- ✅ **테스트 데이터**: PostgreSQL에 실제 테스트 데이터 구축
 
 ### 6.2 검증 환경 구성 요소
 
-#### 6.2.1 Mock Backend System
+#### 6.2.1 Azure AKS 환경
 
-```yaml
-# docker-compose.mock.yml
-services:
-  mock-frontend:
-    image: nginx:alpine
-    volumes:
-      - ./mock/frontend:/usr/share/nginx/html
-    ports:
-      - "3000:80"
-    environment:
-      - API_URL=http://mock-backend:8000
-
-  mock-backend:
-    build: ./mock/backend
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://user:pass@mock-db:5432/mockdb
-    depends_on:
-      - mock-db
-
-  mock-db:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=mockdb
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=pass
-    volumes:
-      - mock-db-data:/var/lib/postgresql/data
+**로컬 개발 (Mac + Docker Compose)**:
+```bash
+# 로컬에서 개발 및 테스트
+docker-compose up -d
 ```
 
-#### 6.2.2 Mock External Systems
+**Azure AKS 배포 (시뮬레이션 환경)**:
+```bash
+# 1. Azure AKS 환경 구축
+./scripts/azure-aks-setup.sh
 
-```python
-# mock/servicenow/app.py
-from fastapi import FastAPI
+# 2. 이미지 빌드 및 푸시
+./scripts/build-and-push.sh
 
-app = FastAPI()
+# 3. Kubernetes 배포
+kubectl apply -f deployment/aks/
 
-@app.post("/api/incidents")
-async def create_incident(incident: dict):
-    """Mock ServiceNow incident creation"""
-    return {"id": "INC0001234", "status": "created"}
+# 4. 시뮬레이션 환경 생성
+./scripts/simulation-env-create.sh
+```
 
-@app.get("/api/incidents/{incident_id}")
-async def get_incident(incident_id: str):
-    """Mock ServiceNow incident retrieval"""
-    return {"id": incident_id, "status": "in_progress"}
+#### 6.2.2 실제 서비스 스택
+
+**Backend (FastAPI)**:
+- Replicas: 3 (Auto-scaling 3-10)
+- Resources: 2Gi Memory, 1 CPU
+- Health Check: /health endpoint
+- Metrics: Prometheus /metrics endpoint
+
+**Frontend (React)**:
+- Replicas: 2
+- Nginx 기반 정적 파일 서빙
+- API Proxy 설정
+
+**Database (PostgreSQL)**:
+- 테스트 데이터 자동 생성
+- 샘플 시스템 정보 (4개 시스템)
+- 샘플 주문 데이터 (수천 건)
+
+**ServiceNow MCP (오픈소스)**:
+```bash
+# 오픈소스 설치
+cd mcp-servers
+git clone https://github.com/echelon-ai-labs/servicenow-mcp.git
+cd servicenow-mcp
+npm install
+npm start
 ```
 
 #### 6.2.3 Prometheus 메트릭 수집

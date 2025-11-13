@@ -172,32 +172,34 @@ Notification: 완료 알림
 
 ## 🚀 빠른 시작
 
-### 1. 환경 변수 설정
+### 로컬 개발 (Mac + Docker Compose)
+
+#### 1. 환경 변수 설정
 
 ```bash
 cp .env.example .env
 # Azure OpenAI 키 등 설정
 ```
 
-### 2. Docker Compose 실행
+#### 2. Docker Compose 실행
 
 ```bash
 docker-compose up -d
 ```
 
-### 3. 지식 베이스 구축
+#### 3. 지식 베이스 구축
 
 ```bash
 python scripts/build_knowledge_base.py
 ```
 
-### 4. API 서버 실행
+#### 4. API 서버 실행
 
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
-### 5. Frontend 실행
+#### 5. Frontend 실행
 
 ```bash
 cd frontend
@@ -207,27 +209,92 @@ npm start
 
 ---
 
-## 📊 검증 환경
+### Azure AKS 배포 (시뮬레이션 환경)
 
-### Mock 시스템 구축
+#### 1. Azure AKS 환경 구축
 
 ```bash
-docker-compose -f docker-compose.mock.yml up -d
+# Azure CLI 로그인
+az login
+
+# AKS 클러스터 및 리소스 생성
+./scripts/azure-aks-setup.sh
 ```
 
-다음 시스템이 시뮬레이션됩니다:
-- **Mock Backend**: FastAPI 기반 테스트용 백엔드
-- **Mock Database**: PostgreSQL 테스트 데이터
-- **Mock ServiceNow**: ITS 시스템 Mock API
-- **Mock Cloud**: Azure/AWS API Mock
+이 스크립트는 다음을 자동으로 생성합니다:
+- ✅ Azure Resource Group
+- ✅ Azure Container Registry (ACR)
+- ✅ AKS Cluster (3 nodes)
+- ✅ Azure OpenAI 리소스 (GPT-4, Embedding)
+- ✅ Kubernetes Namespaces & Secrets
 
-### 모니터링 대시보드
+#### 2. 이미지 빌드 및 푸시
 
-- **Grafana**: http://localhost:3001
-  - Agent Performance Dashboard
-  - System Health Dashboard
-  - Use Case Validation Dashboard
-- **Prometheus**: http://localhost:9090
+```bash
+# Docker 이미지 빌드 및 ACR 푸시
+./scripts/build-and-push.sh
+```
+
+#### 3. Kubernetes 배포
+
+```bash
+# 전체 시스템 배포
+kubectl apply -f deployment/aks/
+
+# 배포 상태 확인
+kubectl get pods -n agentic-ai
+kubectl get svc -n agentic-ai
+```
+
+#### 4. 시뮬레이션 환경 생성
+
+```bash
+# 테스트용 Backend, Frontend, DB, Grafana 배포
+./scripts/simulation-env-create.sh
+
+# 환경 정보 확인
+cat simulation-env-info.txt
+```
+
+#### 5. 시뮬레이션 환경 삭제
+
+```bash
+# 테스트 완료 후 환경 정리
+./scripts/simulation-env-destroy.sh
+```
+
+---
+
+## 📊 검증 환경
+
+### 실제 서비스 기반 시뮬레이션 환경 (Azure AKS)
+
+시뮬레이션 환경에 다음이 배포됩니다:
+- ✅ **Backend API**: FastAPI + 실제 테스트 데이터
+- ✅ **Frontend**: React 앱
+- ✅ **PostgreSQL**: 샘플 데이터 (시스템, 주문 등)
+- ✅ **Prometheus**: 메트릭 수집
+- ✅ **Grafana**: 모니터링 대시보드
+
+### 모니터링 대시보드 (Azure AKS)
+
+시뮬레이션 환경 생성 후 `simulation-env-info.txt`에서 확인:
+
+```bash
+# External IP 확인
+kubectl get svc -n agentic-ai-simulation
+
+# Grafana 접속 (admin/admin)
+http://<GRAFANA_IP>:3000
+
+# Prometheus 접속
+http://<PROMETHEUS_IP>:9090
+```
+
+**Dashboard 종류:**
+- Agent Performance Dashboard
+- System Health Dashboard
+- Use Case Validation Dashboard
 
 ---
 

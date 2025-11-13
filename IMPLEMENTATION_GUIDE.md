@@ -1095,131 +1095,48 @@ if __name__ == "__main__":
     server.run()
 ```
 
-### 5.3 ServiceNow MCP 서버
+### 5.3 ServiceNow MCP 서버 (오픈소스 사용)
 
+**기존 오픈소스 활용**: https://github.com/echelon-ai-labs/servicenow-mcp
+
+```bash
+# ServiceNow MCP 오픈소스 설치
+cd mcp-servers
+git clone https://github.com/echelon-ai-labs/servicenow-mcp.git
+cd servicenow-mcp
+npm install
+```
+
+**환경 변수 설정**:
+```bash
+# .env에 추가
+SERVICENOW_INSTANCE=your-instance.service-now.com
+SERVICENOW_USERNAME=admin
+SERVICENOW_PASSWORD=your-password
+```
+
+**MCP 서버 실행**:
+```bash
+cd mcp-servers/servicenow-mcp
+npm start
+```
+
+**주요 기능**:
+- ✅ Incident 생성/조회/업데이트
+- ✅ Change Request 관리
+- ✅ Configuration Item (CI) 관리
+- ✅ ServiceNow Table API 통합
+
+**Python에서 사용**:
 ```python
-# mcp-servers/servicenow-mcp/server.py
-from mcp.server import Server
-import requests
-from typing import Dict, Any
-import json
-import os
-
-class ServiceNowMCPServer:
-    """ServiceNow MCP 서버"""
-
-    def __init__(self):
-        self.server = Server("servicenow-mcp")
-        self.base_url = f"https://{os.getenv('SERVICENOW_INSTANCE')}/api/now"
-        self.auth = (
-            os.getenv('SERVICENOW_USERNAME'),
-            os.getenv('SERVICENOW_PASSWORD')
-        )
-        self.headers = {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-
-    def register_tools(self):
-        """Tool 등록"""
-
-        @self.server.tool()
-        async def create_incident(
-            title: str,
-            description: str,
-            severity: str = "medium",
-            assigned_to: str = ""
-        ) -> str:
-            """인시던트 생성"""
-            url = f"{self.base_url}/table/incident"
-
-            payload = {
-                "short_description": title,
-                "description": description,
-                "urgency": self._severity_to_urgency(severity),
-                "assigned_to": assigned_to
-            }
-
-            try:
-                response = requests.post(
-                    url,
-                    auth=self.auth,
-                    headers=self.headers,
-                    json=payload
-                )
-                response.raise_for_status()
-
-                result = response.json()['result']
-                return json.dumps({
-                    "incident_id": result['number'],
-                    "sys_id": result['sys_id'],
-                    "status": "created"
-                })
-
-            except Exception as e:
-                return f"Failed to create incident: {str(e)}"
-
-        @self.server.tool()
-        async def update_incident(
-            incident_id: str,
-            **fields
-        ) -> str:
-            """인시던트 업데이트"""
-            url = f"{self.base_url}/table/incident/{incident_id}"
-
-            try:
-                response = requests.patch(
-                    url,
-                    auth=self.auth,
-                    headers=self.headers,
-                    json=fields
-                )
-                response.raise_for_status()
-
-                return json.dumps({
-                    "incident_id": incident_id,
-                    "status": "updated"
-                })
-
-            except Exception as e:
-                return f"Failed to update incident: {str(e)}"
-
-        @self.server.tool()
-        async def get_incident(incident_id: str) -> str:
-            """인시던트 조회"""
-            url = f"{self.base_url}/table/incident/{incident_id}"
-
-            try:
-                response = requests.get(
-                    url,
-                    auth=self.auth,
-                    headers=self.headers
-                )
-                response.raise_for_status()
-
-                return json.dumps(response.json()['result'])
-
-            except Exception as e:
-                return f"Failed to get incident: {str(e)}"
-
-    def _severity_to_urgency(self, severity: str) -> str:
-        """Severity를 ServiceNow Urgency로 변환"""
-        mapping = {
-            "low": "3",
-            "medium": "2",
-            "high": "1",
-            "critical": "1"
-        }
-        return mapping.get(severity, "2")
-
-    def run(self, host: str = "localhost", port: int = 5001):
-        """MCP 서버 실행"""
-        self.register_tools()
-        self.server.run(host=host, port=port)
-
-if __name__ == "__main__":
-    server = ServiceNowMCPServer()
-    server.run()
+# src/core/services/mcp_hub.py에서 호출
+result = mcp_hub.call_tool(
+    server_name="servicenow",
+    tool_name="create_incident",
+    title="결제 시스템 장애",
+    description="503 Service Unavailable",
+    severity="critical"
+)
 ```
 
 ### 5.4 MCP Hub 구현
