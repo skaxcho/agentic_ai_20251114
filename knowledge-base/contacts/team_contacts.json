@@ -1,0 +1,206 @@
+[
+  {
+    "id": "contact-001",
+    "name": "김철수",
+    "role": "AI/ML Lead",
+    "department": "AI Platform Team",
+    "email": "chulsoo.kim@company.com",
+    "phone": "+82-10-1234-5678",
+    "slack": "@chulsoo.kim",
+    "responsibilities": [
+      "AI Agent 개발 총괄",
+      "LLM 및 RAG 시스템 관리",
+      "모델 성능 최적화"
+    ],
+    "expertise": ["Azure OpenAI", "LangChain", "Crew AI", "RAG"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": true
+  },
+  {
+    "id": "contact-002",
+    "name": "이영희",
+    "role": "Backend Engineer",
+    "department": "Platform Team",
+    "email": "younghee.lee@company.com",
+    "phone": "+82-10-2345-6789",
+    "slack": "@younghee.lee",
+    "responsibilities": [
+      "FastAPI 서버 개발",
+      "Database 설계 및 관리",
+      "API 성능 최적화"
+    ],
+    "expertise": ["Python", "FastAPI", "PostgreSQL", "Redis"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-003",
+    "name": "박지훈",
+    "role": "DevOps Engineer",
+    "department": "Infrastructure Team",
+    "email": "jihoon.park@company.com",
+    "phone": "+82-10-3456-7890",
+    "slack": "@jihoon.park",
+    "responsibilities": [
+      "Azure 인프라 관리",
+      "CI/CD 파이프라인 구축",
+      "모니터링 및 알림 시스템 운영"
+    ],
+    "expertise": ["Azure", "Kubernetes", "Docker", "Prometheus", "Grafana"],
+    "availability": "Mon-Fri 9:00-18:00 KST, On-call 24/7",
+    "emergency_contact": true
+  },
+  {
+    "id": "contact-004",
+    "name": "최민지",
+    "role": "Database Administrator",
+    "department": "Database Team",
+    "email": "minji.choi@company.com",
+    "phone": "+82-10-4567-8901",
+    "slack": "@minji.choi",
+    "responsibilities": [
+      "PostgreSQL 운영 및 최적화",
+      "데이터 백업 및 복구",
+      "쿼리 성능 튜닝"
+    ],
+    "expertise": ["PostgreSQL", "SQL", "Database Tuning", "Backup & Recovery"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": true
+  },
+  {
+    "id": "contact-005",
+    "name": "정승호",
+    "role": "Frontend Developer",
+    "department": "UI/UX Team",
+    "email": "seungho.jung@company.com",
+    "phone": "+82-10-5678-9012",
+    "slack": "@seungho.jung",
+    "responsibilities": [
+      "React 프론트엔드 개발",
+      "사용자 인터페이스 설계",
+      "웹 성능 최적화"
+    ],
+    "expertise": ["React", "TypeScript", "Material-UI", "WebSocket"],
+    "availability": "Mon-Fri 10:00-19:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-006",
+    "name": "강수진",
+    "role": "QA Engineer",
+    "department": "Quality Team",
+    "email": "sujin.kang@company.com",
+    "phone": "+82-10-6789-0123",
+    "slack": "@sujin.kang",
+    "responsibilities": [
+      "테스트 케이스 작성 및 실행",
+      "자동화 테스트 구축",
+      "품질 보증 및 검증"
+    ],
+    "expertise": ["pytest", "Selenium", "Load Testing", "API Testing"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-007",
+    "name": "한동욱",
+    "role": "Security Engineer",
+    "department": "Security Team",
+    "email": "dongwook.han@company.com",
+    "phone": "+82-10-7890-1234",
+    "slack": "@dongwook.han",
+    "responsibilities": [
+      "보안 취약점 점검",
+      "인증/인가 시스템 관리",
+      "보안 사고 대응"
+    ],
+    "expertise": ["Security", "OAuth 2.0", "Penetration Testing", "OWASP"],
+    "availability": "Mon-Fri 9:00-18:00 KST, On-call 24/7",
+    "emergency_contact": true
+  },
+  {
+    "id": "contact-008",
+    "name": "윤서연",
+    "role": "Product Manager",
+    "department": "Product Team",
+    "email": "seoyeon.yoon@company.com",
+    "phone": "+82-10-8901-2345",
+    "slack": "@seoyeon.yoon",
+    "responsibilities": [
+      "제품 로드맵 관리",
+      "요구사항 정의 및 우선순위 결정",
+      "stakeholder 커뮤니케이션"
+    ],
+    "expertise": ["Product Management", "Agile", "User Research"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-009",
+    "name": "임재현",
+    "role": "Data Engineer",
+    "department": "Data Team",
+    "email": "jaehyun.lim@company.com",
+    "phone": "+82-10-9012-3456",
+    "slack": "@jaehyun.lim",
+    "responsibilities": [
+      "데이터 파이프라인 구축",
+      "Vector Database 관리",
+      "데이터 품질 관리"
+    ],
+    "expertise": ["Qdrant", "Data Pipeline", "ETL", "Vector Search"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-010",
+    "name": "송민아",
+    "role": "Technical Writer",
+    "department": "Documentation Team",
+    "email": "mina.song@company.com",
+    "phone": "+82-10-0123-4567",
+    "slack": "@mina.song",
+    "responsibilities": [
+      "기술 문서 작성",
+      "사용자 가이드 제작",
+      "API 문서화"
+    ],
+    "expertise": ["Technical Writing", "Markdown", "API Documentation"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-011",
+    "name": "조현우",
+    "role": "ServiceNow Administrator",
+    "department": "ITSM Team",
+    "email": "hyunwoo.jo@company.com",
+    "phone": "+82-10-1111-2222",
+    "slack": "@hyunwoo.jo",
+    "responsibilities": [
+      "ServiceNow 플랫폼 관리",
+      "ITSM 프로세스 설계",
+      "Workflow 자동화"
+    ],
+    "expertise": ["ServiceNow", "ITIL", "Workflow Automation"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": false
+  },
+  {
+    "id": "contact-012",
+    "name": "신유진",
+    "role": "Cloud Architect",
+    "department": "Cloud Team",
+    "email": "yujin.shin@company.com",
+    "phone": "+82-10-2222-3333",
+    "slack": "@yujin.shin",
+    "responsibilities": [
+      "클라우드 아키텍처 설계",
+      "Azure 리소스 최적화",
+      "비용 관리"
+    ],
+    "expertise": ["Azure", "Cloud Architecture", "Cost Optimization", "AKS"],
+    "availability": "Mon-Fri 9:00-18:00 KST",
+    "emergency_contact": true
+  }
+]

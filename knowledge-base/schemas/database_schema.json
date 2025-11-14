@@ -1,0 +1,530 @@
+[
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "tasks",
+    "description": "Agent가 실행하는 작업(Task)의 정보를 저장하는 테이블입니다. 각 작업의 상태, 결과, 메타데이터를 관리합니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "작업의 고유 식별자"
+      },
+      {
+        "name": "agent_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "작업을 실행한 Agent의 이름 (예: ReportAgent, MonitoringAgent)"
+      },
+      {
+        "name": "task_type",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "작업 유형 (예: weekly_report, health_check, incident_create)"
+      },
+      {
+        "name": "task_data",
+        "type": "JSONB",
+        "nullable": false,
+        "description": "작업 입력 데이터 (JSON 형식)"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "default": "pending",
+        "description": "작업 상태 (pending, running, completed, failed)"
+      },
+      {
+        "name": "priority",
+        "type": "VARCHAR(20)",
+        "nullable": true,
+        "default": "medium",
+        "description": "작업 우선순위 (low, medium, high, critical)"
+      },
+      {
+        "name": "result",
+        "type": "JSONB",
+        "nullable": true,
+        "description": "작업 실행 결과 (JSON 형식)"
+      },
+      {
+        "name": "error_message",
+        "type": "TEXT",
+        "nullable": true,
+        "description": "작업 실패 시 오류 메시지"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "작업 생성 시간"
+      },
+      {
+        "name": "started_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "작업 시작 시간"
+      },
+      {
+        "name": "completed_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "작업 완료 시간"
+      },
+      {
+        "name": "created_by",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "description": "작업을 생성한 사용자"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_agent_name",
+        "columns": ["agent_name"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_status",
+        "columns": ["status"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_created_at",
+        "columns": ["created_at"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_tasks_search",
+        "columns": ["task_data"],
+        "type": "gin",
+        "description": "Full-text search on task_data"
+      }
+    ],
+    "sample_query": "SELECT id, agent_name, task_type, status FROM tasks WHERE status = 'pending' ORDER BY created_at ASC LIMIT 10;"
+  },
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "agent_executions",
+    "description": "Agent 실행의 상세 로그를 저장하는 테이블입니다. LLM 호출 횟수, 토큰 사용량 등 실행 메트릭을 추적합니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "실행 로그의 고유 식별자"
+      },
+      {
+        "name": "task_id",
+        "type": "UUID",
+        "nullable": true,
+        "foreign_key": "tasks(id)",
+        "description": "연결된 작업 ID"
+      },
+      {
+        "name": "agent_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "실행한 Agent 이름"
+      },
+      {
+        "name": "execution_start",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "실행 시작 시간"
+      },
+      {
+        "name": "execution_end",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "실행 종료 시간"
+      },
+      {
+        "name": "duration_seconds",
+        "type": "NUMERIC(10, 2)",
+        "nullable": true,
+        "description": "실행 소요 시간 (초)"
+      },
+      {
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "nullable": false,
+        "description": "실행 상태 (success, failed, timeout)"
+      },
+      {
+        "name": "input_data",
+        "type": "JSONB",
+        "nullable": true,
+        "description": "실행 입력 데이터"
+      },
+      {
+        "name": "output_data",
+        "type": "JSONB",
+        "nullable": true,
+        "description": "실행 출력 데이터"
+      },
+      {
+        "name": "error_details",
+        "type": "TEXT",
+        "nullable": true,
+        "description": "오류 상세 정보"
+      },
+      {
+        "name": "llm_calls",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": 0,
+        "description": "LLM 호출 횟수"
+      },
+      {
+        "name": "llm_total_tokens",
+        "type": "INTEGER",
+        "nullable": false,
+        "default": 0,
+        "description": "LLM 총 토큰 사용량"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_task_id",
+        "columns": ["task_id"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_agent_name",
+        "columns": ["agent_name"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_execution_start",
+        "columns": ["execution_start"],
+        "type": "btree"
+      }
+    ],
+    "sample_query": "SELECT agent_name, COUNT(*) as total, AVG(duration_seconds) as avg_duration FROM agent_executions WHERE execution_start >= NOW() - INTERVAL '7 days' GROUP BY agent_name;"
+  },
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "users",
+    "description": "시스템 사용자 정보를 저장하는 테이블입니다. 인증 및 권한 관리에 사용됩니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "사용자 고유 식별자"
+      },
+      {
+        "name": "username",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "unique": true,
+        "description": "사용자명"
+      },
+      {
+        "name": "email",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "unique": true,
+        "description": "이메일 주소"
+      },
+      {
+        "name": "full_name",
+        "type": "VARCHAR(200)",
+        "nullable": true,
+        "description": "전체 이름"
+      },
+      {
+        "name": "hashed_password",
+        "type": "VARCHAR(255)",
+        "nullable": true,
+        "description": "해시된 비밀번호"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": true,
+        "description": "계정 활성화 상태"
+      },
+      {
+        "name": "is_superuser",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": false,
+        "description": "슈퍼유저 여부"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "계정 생성 시간"
+      },
+      {
+        "name": "updated_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "계정 수정 시간"
+      },
+      {
+        "name": "last_login",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "마지막 로그인 시간"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_username",
+        "columns": ["username"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_email",
+        "columns": ["email"],
+        "type": "btree"
+      }
+    ],
+    "sample_query": "SELECT username, email, last_login FROM users WHERE is_active = true ORDER BY last_login DESC;"
+  },
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "api_keys",
+    "description": "API 인증을 위한 API 키를 관리하는 테이블입니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "API 키 고유 식별자"
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "nullable": true,
+        "foreign_key": "users(id)",
+        "description": "API 키 소유자"
+      },
+      {
+        "name": "key_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "API 키 이름"
+      },
+      {
+        "name": "api_key",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "unique": true,
+        "description": "API 키 값 (해시됨)"
+      },
+      {
+        "name": "is_active",
+        "type": "BOOLEAN",
+        "nullable": false,
+        "default": true,
+        "description": "API 키 활성화 상태"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "생성 시간"
+      },
+      {
+        "name": "expires_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "만료 시간"
+      },
+      {
+        "name": "last_used_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": true,
+        "description": "마지막 사용 시간"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_api_key",
+        "columns": ["api_key"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_user_id",
+        "columns": ["user_id"],
+        "type": "btree"
+      }
+    ],
+    "sample_query": "SELECT key_name, created_at, last_used_at, expires_at FROM api_keys WHERE user_id = 'user-uuid' AND is_active = true;"
+  },
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "knowledge_base_metadata",
+    "description": "Vector Database에 저장된 문서의 메타데이터를 관리하는 테이블입니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "메타데이터 고유 식별자"
+      },
+      {
+        "name": "collection_name",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "Qdrant 컬렉션 이름"
+      },
+      {
+        "name": "document_id",
+        "type": "VARCHAR(255)",
+        "nullable": false,
+        "description": "문서 고유 ID"
+      },
+      {
+        "name": "filename",
+        "type": "VARCHAR(500)",
+        "nullable": true,
+        "description": "원본 파일명"
+      },
+      {
+        "name": "file_type",
+        "type": "VARCHAR(50)",
+        "nullable": true,
+        "description": "파일 타입 (md, json, txt, pdf 등)"
+      },
+      {
+        "name": "indexed_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "인덱싱 시간"
+      },
+      {
+        "name": "last_updated",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "마지막 업데이트 시간"
+      },
+      {
+        "name": "metadata",
+        "type": "JSONB",
+        "nullable": true,
+        "description": "추가 메타데이터 (태그, 버전 등)"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_collection_name",
+        "columns": ["collection_name"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_indexed_at",
+        "columns": ["indexed_at"],
+        "type": "btree"
+      }
+    ],
+    "unique_constraints": [
+      {
+        "name": "uk_collection_document",
+        "columns": ["collection_name", "document_id"]
+      }
+    ],
+    "sample_query": "SELECT collection_name, COUNT(*) as document_count FROM knowledge_base_metadata GROUP BY collection_name;"
+  },
+  {
+    "schema_name": "agentic_ai",
+    "table_name": "audit_logs",
+    "description": "시스템의 모든 중요 작업에 대한 감사 로그를 저장하는 테이블입니다.",
+    "columns": [
+      {
+        "name": "id",
+        "type": "UUID",
+        "nullable": false,
+        "primary_key": true,
+        "description": "로그 고유 식별자"
+      },
+      {
+        "name": "user_id",
+        "type": "UUID",
+        "nullable": true,
+        "foreign_key": "users(id)",
+        "description": "작업 수행 사용자"
+      },
+      {
+        "name": "action",
+        "type": "VARCHAR(100)",
+        "nullable": false,
+        "description": "수행된 작업 (create, update, delete, execute 등)"
+      },
+      {
+        "name": "resource_type",
+        "type": "VARCHAR(100)",
+        "nullable": true,
+        "description": "리소스 타입 (task, agent, user 등)"
+      },
+      {
+        "name": "resource_id",
+        "type": "UUID",
+        "nullable": true,
+        "description": "리소스 ID"
+      },
+      {
+        "name": "details",
+        "type": "JSONB",
+        "nullable": true,
+        "description": "작업 상세 정보"
+      },
+      {
+        "name": "ip_address",
+        "type": "INET",
+        "nullable": true,
+        "description": "요청 IP 주소"
+      },
+      {
+        "name": "user_agent",
+        "type": "TEXT",
+        "nullable": true,
+        "description": "User Agent 정보"
+      },
+      {
+        "name": "created_at",
+        "type": "TIMESTAMP WITH TIME ZONE",
+        "nullable": false,
+        "default": "CURRENT_TIMESTAMP",
+        "description": "로그 생성 시간"
+      }
+    ],
+    "indexes": [
+      {
+        "name": "idx_user_id",
+        "columns": ["user_id"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_action",
+        "columns": ["action"],
+        "type": "btree"
+      },
+      {
+        "name": "idx_created_at",
+        "columns": ["created_at"],
+        "type": "btree"
+      }
+    ],
+    "sample_query": "SELECT action, resource_type, created_at FROM audit_logs WHERE user_id = 'user-uuid' ORDER BY created_at DESC LIMIT 50;"
+  }
+]
