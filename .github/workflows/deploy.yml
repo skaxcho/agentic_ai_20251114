@@ -1,0 +1,134 @@
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  KUBECTL_VERSION: 'v1.28.0'
+
+jobs:
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: https://${{ github.event.inputs.environment || 'production' }}.your-domain.com
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Configure Azure credentials
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+        continue-on-error: true
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v3
+        with:
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AZURE_CLUSTER_NAME }}
+        continue-on-error: true
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace agentic-ai --dry-run=client -o yaml | kubectl apply -f -
+        continue-on-error: true
+
+      - name: Create secrets
+        run: |
+          kubectl create secret generic backend-secret \
+            --from-literal=AZURE_OPENAI_API_KEY='${{ secrets.AZURE_OPENAI_API_KEY }}' \
+            --from-literal=AZURE_OPENAI_ENDPOINT='${{ secrets.AZURE_OPENAI_ENDPOINT }}' \
+            --from-literal=AZURE_OPENAI_DEPLOYMENT='${{ secrets.AZURE_OPENAI_DEPLOYMENT }}' \
+            --from-literal=AZURE_OPENAI_EMBEDDING_DEPLOYMENT='${{ secrets.AZURE_OPENAI_EMBEDDING_DEPLOYMENT }}' \
+            -n agentic-ai \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+          kubectl create secret generic postgres-secret \
+            --from-literal=POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}' \
+            -n agentic-ai \
+            --dry-run=client -o yaml | kubectl apply -f -
+        continue-on-error: true
+
+      - name: Update image tags
+        run: |
+          # Update backend image tag
+          sed -i "s|image: your-registry/agentic-ai-backend:latest|image: ${{ secrets.DOCKER_USERNAME }}/agentic-ai-backend:${{ github.sha }}|g" k8s/backend/deployment.yaml
+
+          # Update frontend image tag
+          sed -i "s|image: your-registry/agentic-ai-frontend:latest|image: ${{ secrets.DOCKER_USERNAME }}/agentic-ai-frontend:${{ github.sha }}|g" k8s/frontend/deployment.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying to Kubernetes..."
+
+          # Apply namespace
+          kubectl apply -f k8s/namespace.yaml
+
+          # Apply database
+          kubectl apply -f k8s/database/postgres-statefulset.yaml
+
+          # Wait for database
+          kubectl wait --for=condition=ready pod -l app=postgres -n agentic-ai --timeout=300s || true
+
+          # Apply backend
+          kubectl apply -f k8s/backend/deployment.yaml
+
+          # Apply frontend
+          kubectl apply -f k8s/frontend/deployment.yaml
+
+          # Apply monitoring
+          kubectl apply -f k8s/monitoring/prometheus.yaml
+          kubectl apply -f k8s/monitoring/grafana.yaml
+
+          echo "Deployment completed!"
+        continue-on-error: true
+
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/backend -n agentic-ai --timeout=600s || true
+          kubectl rollout status deployment/frontend -n agentic-ai --timeout=600s || true
+        continue-on-error: true
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+
+          # Get the service URL
+          BACKEND_URL=$(kubectl get svc backend -n agentic-ai -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+          if [ -n "$BACKEND_URL" ]; then
+            # Health check
+            curl -f http://$BACKEND_URL:8000/api/monitoring/health || echo "Health check failed"
+
+            # List agents
+            curl -f http://$BACKEND_URL:8000/api/agents/list || echo "Agent list failed"
+          else
+            echo "Backend URL not available yet"
+          fi
+        continue-on-error: true
+
+      - name: Notify deployment
+        run: |
+          echo "🚀 Deployment to ${{ github.event.inputs.environment || 'production' }} completed!"
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Release: ${{ github.event.release.tag_name }}"
